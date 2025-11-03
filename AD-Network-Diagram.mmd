@@ -1,0 +1,101 @@
+graph TB
+    subgraph Internet["🌐 Internet"]
+        DNS_EXT["External DNS<br/>8.8.8.8"]
+    end
+
+    subgraph Network["VMware Virtual Network - 192.168.10.0/24<br/>Host-Only / Internal Network"]
+        
+        subgraph DC["Domain Controller - DC01"]
+            DC01["🖥️ DC01<br/>Windows Server 2022<br/>192.168.10.10/24"]
+            ADDS["Active Directory<br/>Domain Services<br/>cyberlab.local"]
+            DNS["DNS Server<br/>127.0.0.1"]
+            DHCP["DHCP Server<br/>Scope: .100-.200<br/>Lease: 8 hours"]
+            GPO["Group Policy<br/>Management<br/>4 GPOs"]
+        end
+
+        subgraph Clients["Domain Workstations"]
+            CLIENT01["💻 CLIENT01<br/>Windows 10/11 Pro<br/>192.168.10.100<br/>(DHCP)"]
+            CLIENT02["💻 CLIENT02<br/>Windows 10/11 Pro<br/>192.168.10.101<br/>(DHCP)"]
+        end
+
+        subgraph OUs["Organizational Units"]
+            OU1["📁 CyberLab_Users<br/>├─ IT_Department<br/>├─ Security_Team<br/>├─ HR_Department<br/>└─ Sales_Department"]
+            OU2["📁 CyberLab_Computers<br/>├─ Workstations<br/>├─ Laptops<br/>└─ Servers"]
+            OU3["📁 CyberLab_Groups<br/>├─ IT_Admins<br/>├─ Security_Analysts<br/>├─ HR_Staff<br/>└─ Sales_Team"]
+        end
+
+        subgraph Users["Domain Users"]
+            USER1["👤 jsmith<br/>IT Department"]
+            USER2["👤 jdoe<br/>Security Team"]
+            USER3["👤 mjohnson<br/>IT Department"]
+            USER4["👤 swilliams<br/>HR Department"]
+            USER5["👤 tbrown<br/>Sales Department"]
+            USER6["👤 edavis<br/>Security Team"]
+        end
+
+        subgraph Policies["Group Policies"]
+            GPO1["🔐 Password Security<br/>• 12 char minimum<br/>• 90 day max age<br/>• Complexity required"]
+            GPO2["🚫 Desktop Restrictions<br/>• Block Command Prompt<br/>• Block Control Panel"]
+            GPO3["🔥 Windows Firewall<br/>• Enabled state<br/>• Block inbound<br/>• Allow outbound"]
+            GPO4["🔒 Screen Lock<br/>• 15 min timeout<br/>• Password required"]
+        end
+    end
+
+    %% Connections
+    DC01 --> ADDS
+    DC01 --> DNS
+    DC01 --> DHCP
+    DC01 --> GPO
+    
+    ADDS --> OU1
+    ADDS --> OU2
+    ADDS --> OU3
+    
+    OU1 --> USER1
+    OU1 --> USER2
+    OU1 --> USER3
+    OU1 --> USER4
+    OU1 --> USER5
+    OU1 --> USER6
+    
+    GPO --> GPO1
+    GPO --> GPO2
+    GPO --> GPO3
+    GPO --> GPO4
+    
+    CLIENT01 -.Authentication.-> DC01
+    CLIENT02 -.Authentication.-> DC01
+    
+    CLIENT01 -.DHCP Request.-> DHCP
+    CLIENT02 -.DHCP Request.-> DHCP
+    
+    CLIENT01 -.DNS Query.-> DNS
+    CLIENT02 -.DNS Query.-> DNS
+    
+    GPO1 -.Apply.-> CLIENT01
+    GPO1 -.Apply.-> CLIENT02
+    GPO2 -.Apply.-> CLIENT01
+    GPO2 -.Apply.-> CLIENT02
+    GPO3 -.Apply.-> CLIENT01
+    GPO3 -.Apply.-> CLIENT02
+    GPO4 -.Apply.-> CLIENT01
+    GPO4 -.Apply.-> CLIENT02
+    
+    DNS -.Forward.-> DNS_EXT
+    
+    OU2 --> CLIENT01
+    OU2 --> CLIENT02
+
+    classDef dcStyle fill:#2E5090,stroke:#1a3050,stroke-width:3px,color:#fff
+    classDef clientStyle fill:#28a745,stroke:#1e7e34,stroke-width:2px,color:#fff
+    classDef serviceStyle fill:#17a2b8,stroke:#117a8b,stroke-width:2px,color:#fff
+    classDef ouStyle fill:#6c757d,stroke:#495057,stroke-width:2px,color:#fff
+    classDef userStyle fill:#ffc107,stroke:#d39e00,stroke-width:2px,color:#000
+    classDef policyStyle fill:#dc3545,stroke:#bd2130,stroke-width:2px,color:#fff
+    
+    class DC01,ADDS dcStyle
+    class CLIENT01,CLIENT02 clientStyle
+    class DNS,DHCP,GPO serviceStyle
+    class OU1,OU2,OU3 ouStyle
+    class USER1,USER2,USER3,USER4,USER5,USER6 userStyle
+    class GPO1,GPO2,GPO3,GPO4 policyStyle
